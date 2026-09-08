@@ -178,6 +178,52 @@ button { cursor: pointer; }
 .mission-card p { margin: 0; font-size: 13px; }
 .done-pill { float: right; color: var(--green); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
 
+.mission-track {
+  margin-top: 48px;
+  padding-top: 32px;
+  border-top: 1px solid var(--line);
+}
+.mission-track h2 {
+  font-size: 28px;
+  letter-spacing: -0.03em;
+  margin: 8px 0 12px;
+}
+.shop-tease {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin: 20px 0 8px;
+  max-width: 980px;
+}
+.shop-tease > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 120px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.shop-tease b {
+  color: var(--amber);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+.shop-tease small {
+  color: var(--faint);
+  font-weight: 500;
+  font-size: 12px;
+}
+.shop-tease > span {
+  color: var(--faint);
+  font-size: 16px;
+}
+
 .brief-grid { display: grid; grid-template-columns: 1.4fr 0.8fr; gap: 28px; margin-top: 20px; }
 .panel {
   background: var(--surface);

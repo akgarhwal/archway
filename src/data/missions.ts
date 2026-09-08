@@ -70,6 +70,46 @@ const prod: Mix = {
   ddos: 0.05,
 };
 
+const browse: Mix = {
+  static: 0.52,
+  read: 0.28,
+  write: 0.05,
+  upload: 0.07,
+  search: 0.04,
+  malicious: 0.03,
+  ddos: 0.01,
+};
+
+const seeking: Mix = {
+  static: 0.12,
+  read: 0.18,
+  write: 0.06,
+  upload: 0.02,
+  search: 0.5,
+  malicious: 0.08,
+  ddos: 0.04,
+};
+
+const checkout: Mix = {
+  static: 0.12,
+  read: 0.16,
+  write: 0.5,
+  upload: 0.08,
+  search: 0.06,
+  malicious: 0.06,
+  ddos: 0.02,
+};
+
+const sale: Mix = {
+  static: 0.22,
+  read: 0.2,
+  write: 0.32,
+  upload: 0.08,
+  search: 0.08,
+  malicious: 0.06,
+  ddos: 0.04,
+};
+
 export const MISSIONS: Mission[] = [
   {
     id: 'boot',
@@ -263,4 +303,110 @@ export const MISSIONS: Mission[] = [
       'cloudwatch',
     ],
   },
+  {
+    id: 'shop-catalog',
+    kicker: 'Store 01',
+    title: 'The Catalog',
+    briefing:
+      'The shop is open and everyone is browsing. Product images and PDPs are mostly files, not SQL. CloudFront should terminate the photos; S3 is the origin for misses. Put a cache beside compute for the product reads that still get through. If EC2 is serving JPEGs, you already lost.',
+    stakes: 'A product photo from origin is a self-inflicted bill.',
+    win: 'Static never needed a web server. The catalog is an edge problem.',
+    hint: 'Internet → CloudFront → S3 for assets. CloudFront → ALB → EC2 → ElastiCache for product reads.',
+    startRps: 24,
+    rpsGrowth: 0.06,
+    mix: browse,
+    events: false,
+    objectives: [
+      { id: 'cf', type: 'place', service: 'cloudfront', label: 'Place CloudFront' },
+      { id: 's3', type: 'place', service: 's3', label: 'Place S3 as the image origin' },
+      { id: 'cache', type: 'place', service: 'cache', label: 'Place ElastiCache for product reads' },
+      { id: 'path', type: 'path', from: 'cloudfront', to: 's3', label: 'CloudFront can reach S3' },
+      { id: 'serve', type: 'serve', n: 90, label: 'Serve 90 successful requests' },
+    ],
+    failSla: 40,
+    recommended: ['cloudfront', 's3', 'waf', 'alb', 'ec2', 'cache'],
+  },
+  {
+    id: 'shop-search',
+    kicker: 'Store 02',
+    title: 'The Search Box',
+    briefing:
+      'Typeahead is a different shape of traffic. Search packets cost more than a GET. If every keystroke is SELECT LIKE on RDS, browse takes down buy. Cache the hot queries. Hide the database behind compute. Never put RDS on the public internet.',
+    stakes: 'A typeahead that hits RDS is how the store takes itself down.',
+    win: 'Search is its own path. The catalog cache is not optional once people start typing.',
+    hint: 'ALB → EC2 → ElastiCache, with RDS only on a cache miss. Do not wire Internet → RDS.',
+    startRps: 20,
+    rpsGrowth: 0.08,
+    mix: seeking,
+    events: true,
+    eventDelay: 16,
+    objectives: [
+      { id: 'cache', type: 'place', service: 'cache', label: 'Place ElastiCache' },
+      { id: 'rds', type: 'place', service: 'rds', label: 'Place RDS behind compute' },
+      { id: 'path', type: 'path', from: 'ec2', to: 'cache', label: 'Compute can reach the cache' },
+      { id: 'sla', type: 'sla', n: 90, label: 'Hold SLA ≥ 90% for 20s' },
+    ],
+    failSla: 35,
+    recommended: ['waf', 'alb', 'ec2', 'cache', 'rds'],
+  },
+  {
+    id: 'shop-checkout',
+    kicker: 'Store 03',
+    title: 'Place the Order',
+    briefing:
+      'Checkout is a write burst. If every POST /order waits on RDS, latency climbs together and the sale dies. Accept on SQS (HTTP 202) and let a worker drain. DynamoDB is the cart; RDS is the ledger. A queue without a consumer is a black hole.',
+    stakes: 'Checkout that waits on SQL is a flash-sale outage with extra steps.',
+    win: 'The customer got “accepted.” The ledger got a smooth drain. That is checkout.',
+    hint: 'Compute → SQS → worker (EC2/Lambda) → RDS. Cart state belongs on DynamoDB, not on the PDP path.',
+    startRps: 18,
+    rpsGrowth: 0.09,
+    mix: checkout,
+    events: true,
+    eventDelay: 12,
+    objectives: [
+      { id: 'sqs', type: 'place', service: 'sqs', label: 'Place SQS for orders' },
+      { id: 'ddb', type: 'place', service: 'dynamodb', label: 'Place DynamoDB for the cart' },
+      { id: 'path', type: 'path', from: 'ec2', to: 'sqs', label: 'Compute can enqueue to SQS' },
+      { id: 'survive', type: 'survive', n: 50, label: 'Survive 50 seconds of checkout traffic' },
+      { id: 'sla', type: 'sla', n: 88, label: 'Hold SLA ≥ 88% for 20s' },
+    ],
+    failSla: 32,
+    recommended: ['apigateway', 'alb', 'ec2', 'lambda', 'sqs', 'dynamodb', 'rds'],
+  },
+  {
+    id: 'shop-flash',
+    kicker: 'Store 04',
+    title: 'Flash Sale',
+    briefing:
+      'The SKU just dropped. Browse, search, and checkout hit the same wire. A flash-sale event will fire — writes spike, then a lull still invoices. Edge the catalog, cache the reads, queue the orders. Hold the SLA. Stay solvent.',
+    stakes: 'The store you designed has to hold when everyone wants the same thing.',
+    win: 'That is an e-commerce architecture. Catalog at the edge, search off the SQL, checkout accepted not finished.',
+    hint: 'CloudFront + S3, cache, SQS workers, WAF. Do not buy ten more EC2s when the flood is actually buyers.',
+    startRps: 20,
+    rpsGrowth: 0.11,
+    mix: sale,
+    events: true,
+    eventDelay: 10,
+    objectives: [
+      { id: 'survive', type: 'survive', n: 80, label: 'Stay up for 80 seconds' },
+      { id: 'sla', type: 'sla', n: 90, label: 'Hold SLA ≥ 90% for 20s' },
+      { id: 'profit', type: 'profit', n: 0, label: 'Finish with a non-negative ledger' },
+      { id: 'wa', type: 'wa', n: 65, label: 'Well-Architected score ≥ 65' },
+    ],
+    failSla: 30,
+    recommended: [
+      'cloudfront',
+      'waf',
+      'alb',
+      'ec2',
+      'cache',
+      's3',
+      'sqs',
+      'dynamodb',
+      'rds',
+      'cloudwatch',
+    ],
+  },
 ];
+
+export const CORE_MISSION_COUNT = 8;
