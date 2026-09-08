@@ -2,15 +2,14 @@ import {
   CATALOG,
   DEFAULT_MIX,
   KIND_META,
-  LIVE_EARN,
-  LIVE_FAIL,
   LIVE_MIX,
+  LIVE_START_RPS,
   START_GRANT,
   SIZE_CAP,
   SIZE_OPEX,
   UPGRADE_COST,
 } from '../data/catalog';
-import { eventOrder, makeEvent } from '../data/events';
+import { eventOrder, LIVE_FIRST_EVENT, makeEvent } from '../data/events';
 import { MISSIONS } from '../data/missions';
 import type {
   CoachMsg,
@@ -175,7 +174,7 @@ export function createInitialState(mode: ModeLike, missionIndex: number, seed?: 
     runtime: { n_internet: emptyRuntime() },
     metrics: emptyMetrics(),
     event: null,
-    nextEventAt: live ? 22 : mode === 'sandbox' ? 18 : (MISSIONS[missionIndex]?.eventDelay ?? 22),
+    nextEventAt: live ? LIVE_FIRST_EVENT : mode === 'sandbox' ? 18 : (MISSIONS[missionIndex]?.eventDelay ?? 22),
     log: [],
     coach: {
       id: 'welcome',
@@ -830,10 +829,6 @@ function applyOutcome(state: GameState, kind: RequestKind, res: Resolved) {
   const routed = !noRoute || state.mode === 'live';
   state.metrics.seen[kind] += 1;
   state.metrics.seenTotal += 1;
-  if (state.mode === 'live' && res.money !== 0) {
-    if (res.money > 0) res.money *= LEGIT.includes(kind) ? LIVE_EARN : 0.5;
-    else if (legit) res.money *= LIVE_FAIL;
-  }
   if (legit && routed) {
     let tot = state.metrics.legitTotWindow;
     let ok = state.metrics.legitOkWindow;
@@ -915,10 +910,10 @@ export function currentMix(state: Pick<GameState, 'mode' | 'missionIndex' | 'eve
 
 /** Breathing load: slow climb, a 70s business cycle, a faster wobble. Lulls are events. */
 export function liveIngress(t: number): number {
-  const trend = 10 + t * 0.105;
+  const trend = LIVE_START_RPS + t * 0.105;
   const day = 1 + 0.3 * Math.sin((t / 70) * Math.PI * 2);
   const breath = 1 + 0.1 * Math.sin((t / 22) * Math.PI * 2);
-  return Math.min(130, Math.max(6, trend * day * breath));
+  return Math.min(130, Math.max(4, trend * day * breath));
 }
 
 export function currentRps(state: GameState): number {

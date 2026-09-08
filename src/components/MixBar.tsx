@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { KIND_COLOR, KIND_META, LIVE_EARN } from '../data/catalog';
+import { KIND_COLOR, KIND_META } from '../data/catalog';
 import { money } from '../lib/format';
 import { currentMix } from '../sim/engine';
 import { mixFocus } from '../sim/mixFocus';
@@ -11,13 +11,7 @@ const TIP_W = 248;
 const TIP_GAP = 8;
 const LABEL_MIN = 0.09;
 
-function kindEarn(kind: RequestKind, live: boolean): number {
-  const base = KIND_META[kind].earn;
-  if (!live) return base;
-  return LEGIT.includes(kind) ? base * LIVE_EARN : base * 0.5;
-}
-
-function MixSeg({ kind, share, live }: { kind: RequestKind; share: number; live: boolean }) {
+function MixSeg({ kind, share }: { kind: RequestKind; share: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const meta = KIND_META[kind];
@@ -36,7 +30,7 @@ function MixSeg({ kind, share, live }: { kind: RequestKind; share: number; live:
     setPos({ top, left });
   };
 
-  const earn = kindEarn(kind, live);
+  const earn = KIND_META[kind].earn;
   const pay = LEGIT.includes(kind) ? 'Served' : 'Blocked';
 
   return (
@@ -80,7 +74,6 @@ export function MixBar() {
   const event = useGame((s) => s.event);
   const mix = currentMix({ mode, missionIndex, event });
   const focus = mixFocus(mix, event?.type ?? null);
-  const live = mode === 'live';
   const eventMix = event?.mix;
 
   return (
@@ -89,7 +82,7 @@ export function MixBar() {
         <span className="lbl">Mix</span>
         <div className={`mixbar-track${eventMix ? ' event' : ''}`}>
           {KINDS.map((k) => (
-            <MixSeg key={k} kind={k} share={mix[k]} live={live} />
+            <MixSeg key={k} kind={k} share={mix[k]} />
           ))}
         </div>
         {eventMix && event ? <span className="mixbar-flag">{event.title}</span> : null}
