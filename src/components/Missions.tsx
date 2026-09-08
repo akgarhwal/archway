@@ -54,8 +54,9 @@ export function Missions() {
         <h2>Now design the shop.</h2>
         <p className="screen-narrow">
           E-commerce is the same primitives under a real product. One lesson each: catalog at the
-          edge, search off the SQL, checkout accepted not finished, then a flash sale. This track
-          is separate from the eight — every shop mission is open.
+          edge, search off the SQL, checkout accepted not finished, then a flash sale. Separate
+          from the eight — Catalog is open now, then each next shop mission unlocks when you
+          clear the previous.
         </p>
         <div className="shop-tease" aria-hidden="true">
           <div>

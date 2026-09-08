@@ -418,11 +418,11 @@ export function trackEnd(index: number): number {
   return index < CORE_MISSION_COUNT ? CORE_MISSION_COUNT : MISSIONS.length;
 }
 
-/** Core curriculum unlocks in order. Storefront is a separate track — every shop mission is open. */
+/** Each category unlocks in order, independently of the others. */
 export function isMissionLocked(index: number, completed: string[]): boolean {
   if (index < 0 || index >= MISSIONS.length) return true;
-  if (index >= CORE_MISSION_COUNT) return false;
-  if (index === 0) return false;
+  const start = trackStart(index);
+  if (index === start) return false;
   return !completed.includes(MISSIONS[index - 1].id);
 }
 
