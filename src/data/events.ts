@@ -82,11 +82,18 @@ export const EVENT_COPY: Record<
   },
 };
 
+/** Production waits this long so a starter path can earn before the first shock. */
+export const LIVE_FIRST_EVENT = 50;
+
 export function eventOrder(elapsed: number, live = false): EventType {
   const cycle: EventType[] = live
     ? ['spike', 'lull', 'ddos', 'flash', 'lull', 'stampede', 'poison', 'neighbor']
     : ['spike', 'ddos', 'flash', 'stampede', 'poison', 'neighbor'];
-  return cycle[Math.floor(elapsed / 18) % cycle.length];
+  // Live used to fire at t=22, which skipped spike (index 1 = lull). Offset so the first live event is spike.
+  const i = live
+    ? Math.max(0, Math.floor((elapsed - LIVE_FIRST_EVENT) / 18))
+    : Math.floor(elapsed / 18);
+  return cycle[i % cycle.length];
 }
 
 export function makeEvent(

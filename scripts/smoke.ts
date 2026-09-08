@@ -1,5 +1,5 @@
-import { DEFAULT_MIX, LIVE_MIX } from '../src/data/catalog';
-import { makeEvent } from '../src/data/events';
+import { DEFAULT_MIX, LIVE_MIX, LIVE_START_RPS } from '../src/data/catalog';
+import { eventOrder, LIVE_FIRST_EVENT, makeEvent } from '../src/data/events';
 import { MISSIONS } from '../src/data/missions';
 import {
   connectNodes,
@@ -7,6 +7,7 @@ import {
   currentMix,
   deleteSelection,
   goLive,
+  liveIngress,
   placeNode,
   simulate,
   upgradeNode,
@@ -87,6 +88,9 @@ must(cur.metrics.blocked > 0, 'WAF should block some attacks');
 s = createInitialState('live', 0, 3);
 must(s.money === 7200, 'live grant');
 must(s.speed === 0 && !s.liveStarted, 'live starts paused');
+must(s.nextEventAt === LIVE_FIRST_EVENT, 'production first event waits');
+must(Math.abs(liveIngress(0) - LIVE_START_RPS) < 0.05, 'production opens at start rps');
+must(eventOrder(LIVE_FIRST_EVENT, true) === 'spike', 'first production event is a spike');
 s = simulate(s, 0.1);
 must(s.simTime === 0, 'planning does not tick');
 s = goLive(s);

@@ -303,8 +303,8 @@ export const LIVE_MIX: Mix = {
 /** Same grant in every mode — ten EC2s, which is the trap. */
 export const START_GRANT = 7200;
 export const LIVE_START_MONEY = START_GRANT;
-export const LIVE_EARN = 0.42;
-export const LIVE_FAIL = 1.75;
+/** Opening Production load. Same $ per packet as missions; this RPS is what keeps a fortress from printing money on day one. */
+export const LIVE_START_RPS = 6;
 
 export const SIZE_LABEL = ['', 'T1', 'T2', 'T3'] as const;
 export const SIZE_CAP = [0, 1, 2, 4] as const;

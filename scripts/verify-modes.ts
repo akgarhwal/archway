@@ -4,12 +4,14 @@ import {
   currentMix,
   evaluateObjectives,
   goLive,
+  liveIngress,
   placeNode,
   simulate,
 } from '../src/sim/engine';
 import { mixFocus } from '../src/sim/mixFocus';
 import { sla, wellArchitected } from '../src/sim/score';
-import { LIVE_MIX } from '../src/data/catalog';
+import { LIVE_MIX, LIVE_START_RPS } from '../src/data/catalog';
+import { eventOrder, LIVE_FIRST_EVENT } from '../src/data/events';
 import { MISSIONS } from '../src/data/missions';
 import type { GameState, ServiceId } from '../src/types';
 
@@ -231,6 +233,75 @@ console.log('--- production ---');
   console.log(
     `production ok t=${s.simTime.toFixed(0)} served=${s.metrics.servedTotal} money=${s.money.toFixed(0)} sla=${sla(s).toFixed(0)}`,
   );
+}
+
+console.log('--- live economy ---');
+{
+  assert(Math.abs(liveIngress(0) - LIVE_START_RPS) < 0.05, 'open at start rps');
+  assert(eventOrder(LIVE_FIRST_EVENT, true) === 'spike', 'first live event is spike');
+  assert(createInitialState('live', 0, 1).nextEventAt === LIVE_FIRST_EVENT, 'first shock waits');
+
+  let starter = createInitialState('live', 0, 3);
+  starter = backbone(starter, ['waf', 'cloudfront', 'alb', 'ec2', 's3']);
+  starter = place(starter, 'ec2', 480, 280);
+  starter = wire(starter, 'alb', 'ec2', 0, 1);
+  const starterLeft = starter.money;
+  starter = goLive(starter);
+  starter = runTicks(starter, 60);
+  assert(!starter.loseReason, `starter died: ${starter.loseReason}`);
+  assert(starter.money > 0, 'starter solvent');
+  assert(starter.money > starterLeft - 800, `starter bled too hard ${starter.money.toFixed(0)} from ${starterLeft.toFixed(0)}`);
+  console.log(
+    `starter 60s leftover=${starterLeft.toFixed(0)} now=${starter.money.toFixed(0)} sla=${sla(starter).toFixed(0)}`,
+  );
+
+  let first = createInitialState('live', 0, 7);
+  first = backbone(first, ['waf', 'cloudfront', 'alb', 'ec2', 's3']);
+  first = goLive(first);
+  for (let i = 0; i < 800 && !first.event; i++) first = simulate(first, 0.1);
+  assert(first.event?.type === 'spike', `first event was ${first.event?.type ?? 'none'} at t=${first.simTime.toFixed(1)}`);
+  assert(first.simTime >= LIVE_FIRST_EVENT - 0.2, 'spike must wait for the first-event delay');
+  console.log(`first event ${first.event.type} at t=${first.simTime.toFixed(1)}`);
+
+  let fortress = createInitialState('live', 0, 3);
+  fortress = backbone(fortress, [
+    'route53',
+    'shield',
+    'waf',
+    'cloudfront',
+    'alb',
+    'ec2',
+    'cache',
+    'rds',
+    's3',
+    'sqs',
+    'cloudwatch',
+  ]);
+  const fortLeft = fortress.money;
+  fortress = goLive(fortress);
+  fortress = runTicks(fortress, 60);
+  assert(!fortress.loseReason, `fortress died in 60s: ${fortress.loseReason}`);
+  assert(
+    fortress.money <= fortLeft + 200,
+    `fortress printed too much in minute 1: ${fortress.money.toFixed(0)} vs leftover ${fortLeft.toFixed(0)}`,
+  );
+  console.log(
+    `fortress 60s leftover=${fortLeft.toFixed(0)} now=${fortress.money.toFixed(0)} sla=${sla(fortress).toFixed(0)}`,
+  );
+
+  let grow = createInitialState('live', 0, 5);
+  grow = backbone(grow, ['waf', 'cloudfront', 'alb', 'ec2', 's3']);
+  grow = place(grow, 'ec2', 480, 280);
+  grow = wire(grow, 'alb', 'ec2', 0, 1);
+  grow = goLive(grow);
+  grow = runTicks(grow, 45);
+  assert(!grow.loseReason, `died before cache buy: ${grow.loseReason}`);
+  grow = place(grow, 'cache', 540, 200);
+  grow = wire(grow, 'ec2', 'cache');
+  grow = runTicks(grow, 30);
+  assert(!grow.loseReason, `cache buy bankrupt in 30s: ${grow.loseReason}`);
+  assert(grow.money > 0, 'cache buy solvent');
+  console.log(`cache buy survived t=${grow.simTime.toFixed(0)} money=${grow.money.toFixed(0)}`);
 }
 
 console.log('--- mix ---');

@@ -106,7 +106,7 @@ export function TrafficBill({ layout }: { layout: 'bar' | 'grid' }) {
       lbl: 'Earned',
       val: cash(t.earned),
       cls: 'up',
-      blurb: 'Cash from served requests, plus a few cents for a clean block. Production pays 42¢ on the dollar vs Missions.',
+      blurb: 'Cash from served requests, plus a few cents for a clean block. Same rates in missions, sandbox, and Production.',
       hint: 'Ramps with traffic. Opening minutes look small on purpose.',
     },
     {
