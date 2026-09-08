@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 740" role="img" aria-labelledby="title desc">
+  <title id="title">Archway request path</title>
+  <desc id="desc">Users to Route 53, Shield, WAF, CloudFront. Cache hits never touch origin. Misses go to ALB, compute, then cache, RDS, S3, or SQS. CloudWatch watches; it is not a hop.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1118"/>
+      <stop offset="1" stop-color="#070b10"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="920" height="740" rx="20" fill="url(#bg)"/>
+  <rect x="1" y="1" width="918" height="738" rx="19" fill="none" stroke="#243044"/>
+
+  <text x="40" y="42" fill="#f5a524" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11" font-weight="700" letter-spacing="2.4">THE REQUEST PATH</text>
+  <text x="40" y="64" fill="#8b9bb0" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13">A cache hit never touches RDS. A flood that lands on Lambda is a bill you wrote.</text>
+
+  <!-- spine wire -->
+  <path d="M140 92 v430" fill="none" stroke="#314257" stroke-width="2"/>
+
+  <!-- Users -->
+  <g transform="translate(40,78)">
+    <rect width="200" height="46" rx="10" fill="#111922" stroke="#243044"/>
+    <circle cx="18" cy="23" r="5" fill="#5ce1e6"/>
+    <text x="34" y="21" fill="#e8eef6" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="700">Users</text>
+    <text x="34" y="36" fill="#5d6d82" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11">customers · bots · floods</text>
+  </g>
+
+  <!-- Route 53 -->
+  <g transform="translate(40,148)">
+    <rect width="200" height="46" rx="10" fill="#111922" stroke="#243044"/>
+    <circle cx="18" cy="23" r="5" fill="#8b7cf6"/>
+    <text x="34" y="21" fill="#e8eef6" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="700">Route 53</text>
+    <text x="34" y="36" fill="#5d6d82" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11">DNS · health checks</text>
+  </g>
+
+  <!-- Shield + absorb -->
+  <g transform="translate(40,218)">
+    <rect width="200" height="46" rx="10" fill="#111922" stroke="#243044"/>
+    <circle cx="18" cy="23" r="5" fill="#ff6b6b"/>
+    <text x="34" y="21" fill="#e8eef6" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="700">Shield</text>
+    <text x="34" y="36" fill="#5d6d82" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11">L3 / L4 absorb</text>
+  </g>
+  <path d="M240 241 H310" fill="none" stroke="#314257" stroke-width="2"/>
+  <g transform="translate(310,218)">
+    <rect width="168" height="46" rx="10" fill="#141018" stroke="#5a2a32"/>
+    <text x="14" y="21" fill="#ff5d7a" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="700">ABSORB</text>
+    <text x="14" y="36" fill="#8b9bb0" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11">flood dies here</text>
+  </g>
+
+  <!-- WAF + 403 -->
+  <g transform="translate(40,288)">
+    <rect width="200" height="46" rx="10" fill="#111922" stroke="#243044"/>
+    <circle cx="18" cy="23" r="5" fill="#ff8a5b"/>
+    <text x="34" y="21" fill="#e8eef6" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="700">WAF</text>
+    <text x="34" y="36" fill="#5d6d82" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11">L7 inspect · drop</text>
+  </g>
+  <path d="M240 311 H310" fill="none" stroke="#314257" stroke-width="2"/>
+  <g transform="translate(310,288)">
+    <rect width="168" height="46" rx="10" fill="#141018" stroke="#5a2a32"/>
+    <text x="14" y="21" fill="#ff5d7a" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="700">403</text>
+    <text x="14" y="36" fill="#8b9bb0" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11">SQLi / XSS blocked</text>
+  </g>
+
+  <!-- CloudFront + HIT -->
+  <g transform="translate(40,358)">
+    <rect width="200" height="46" rx="10" fill="#111922" stroke="#c084fc" stroke-opacity="0.55"/>
+    <circle cx="18" cy="23" r="5" fill="#c084fc"/>
+    <text x="34" y="21" fill="#e8eef6" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="700">CloudFront</text>
+    <text x="34" y="36" fill="#5d6d82" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11">CDN · origin shield</text>
+  </g>
+  <path d="M240 381 H310" fill="none" stroke="#3dd68c" stroke-width="2"/>
+  <g transform="translate(310,358)">
+    <rect width="248" height="46" rx="10" fill="#0f1a14" stroke="#3dd68c" stroke-opacity="0.55"/>
+    <text x="14" y="21" fill="#3dd68c" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="700">200 · HIT</text>
+    <text x="14" y="36" fill="#8b9bb0" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11">origin never billed</text>
+  </g>
+
+  <!-- MISS label -->
+  <rect x="118" y="412" width="44" height="18" rx="9" fill="#17212c" stroke="#314257"/>
+  <text x="140" y="425" text-anchor="middle" fill="#f5a524" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10" font-weight="700" letter-spacing="1">MISS</text>
+
+  <!-- ALB -->
+  <g transform="translate(40,440)">
+    <rect width="200" height="46" rx="10" fill="#111922" stroke="#243044"/>
+    <circle cx="18" cy="23" r="5" fill="#f5a524"/>
+    <text x="34" y="21" fill="#e8eef6" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="700">ALB</text>
+    <text x="34" y="36" fill="#5d6d82" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11">spread · needs 2 targets</text>
+  </g>
+
+  <!-- Compute -->
+  <g transform="translate(40,510)">
+    <rect width="200" height="46" rx="10" fill="#111922" stroke="#243044"/>
+    <circle cx="18" cy="23" r="5" fill="#f59e0b"/>
+    <text x="34" y="21" fill="#e8eef6" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="700">EC2 / Lambda</text>
+    <text x="34" y="36" fill="#5d6d82" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11">origin compute · the bill</text>
+  </g>
+
+  <!-- fan wires -->
+  <path d="M140 556 v28 H70 v16" fill="none" stroke="#314257" stroke-width="2"/>
+  <path d="M140 584 H250 v16" fill="none" stroke="#314257" stroke-width="2"/>
+  <path d="M140 584 H430 v16" fill="none" stroke="#314257" stroke-width="2"/>
+  <path d="M140 584 H640 v16" fill="none" stroke="#314257" stroke-width="2"/>
+
+  <!-- fan: cache -->
+  <g transform="translate(20,600)">
+    <rect width="170" height="52" rx="10" fill="#0f1a14" stroke="#38bdf8" stroke-opacity="0.45"/>
+    <text x="12" y="22" fill="#38bdf8" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="700">ElastiCache HIT</text>
+    <text x="12" y="38" fill="#8b9bb0" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11">done · RDS never saw it</text>
+  </g>
+
+  <!-- fan: db miss -->
+  <g transform="translate(200,600)">
+    <rect width="170" height="52" rx="10" fill="#111922" stroke="#243044"/>
+    <text x="12" y="22" fill="#62b2ff" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="700">miss → RDS / DDB</text>
+    <text x="12" y="38" fill="#8b9bb0" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11">source of truth · hide it</text>
+  </g>
+
+  <!-- fan: s3 -->
+  <g transform="translate(380,600)">
+    <rect width="170" height="52" rx="10" fill="#111922" stroke="#243044"/>
+    <text x="12" y="22" fill="#f43f5e" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="700">static → S3</text>
+    <text x="12" y="38" fill="#8b9bb0" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11">object origin · not SQL</text>
+  </g>
+
+  <!-- fan: sqs -->
+  <g transform="translate(560,600)">
+    <rect width="200" height="52" rx="10" fill="#111922" stroke="#243044"/>
+    <text x="12" y="22" fill="#e879f9" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="700">SQS → worker → RDS</text>
+    <text x="12" y="38" fill="#8b9bb0" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11">202 accepted · then drain</text>
+  </g>
+
+  <!-- CloudWatch -->
+  <g transform="translate(40,672)">
+    <rect width="840" height="40" rx="10" fill="#0b1118" stroke="#243044" stroke-dasharray="5 4"/>
+    <text x="16" y="25" fill="#5d6d82" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13">CloudWatch watches the path. It is not a hop. Packets that go here are lost.</text>
+  </g>
+</svg>

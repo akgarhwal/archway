@@ -37,16 +37,11 @@ A cache hit never touches RDS. A WAF drop never becomes a breach. A DDoS that la
 
 Watch seven request types walk the same production path — including the ones that should never be allowed to see RDS.
 
-```
-Users → Route 53 → Shield → WAF → CloudFront
-          ├─ HIT  → done. Origin never billed.
-          └─ MISS → ALB → EC2 / Lambda
-                        ├─ cache HIT → done
-                        ├─ miss → RDS / DynamoDB
-                        ├─ static → S3
-                        └─ SQS → worker → RDS
-CloudWatch watches. It is not a hop.
-```
+<p align="center">
+  <a href="https://akgarhwal.github.io/archway/">
+    <img src="docs/request-path.svg" alt="Request path: Users → Route 53 → Shield → WAF → CloudFront. HIT never bills origin. MISS goes to ALB, compute, cache, RDS, S3, or SQS. CloudWatch is not a hop." width="920" />
+  </a>
+</p>
 
 ## Eight systems. One bill. The last one is Black Friday.
 
