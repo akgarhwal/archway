@@ -1,6 +1,7 @@
-# Defend the Origin — Product Requirements
+# Archway — Product Requirements
 
-**Working title:** Defend the Origin  
+**Working title:** Archway  
+**Title:** Defend the Origin  
 **Console brand:** Archway  
 **Type:** Single-player, frontend-only educational game  
 **Domain:** High-level system design (HLD) on an AWS-like cloud  

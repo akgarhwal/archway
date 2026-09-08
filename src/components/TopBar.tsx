@@ -23,8 +23,8 @@ export function TopBar() {
   return (
     <header className="topbar">
       <div className="top-brand">
-        <div className="mark">O</div>
-        Origin
+        <div className="mark">A</div>
+        Archway
         <small>{modeLabel}</small>
       </div>
       <div className="meters">

@@ -11,15 +11,13 @@ export function TitleScreen() {
     <div className="title">
       <div className="title-left">
         <div className="brand-row">
-          <div className="mark">O</div>
-          Defend the Origin · high-level design lab
+          <div className="mark">A</div>
+          Archway · high-level design lab
         </div>
         <h1>
-          Build a production
+          Defend the
           <br />
-          system. <span>Get paid.</span>
-          <br />
-          Get DDoS’d.
+          origin.
         </h1>
         <p className="lede">
           A frontend-only AWS-shaped tycoon for learning HLD. Legitimate requests are revenue.

@@ -1,6 +1,6 @@
-# Defend the Origin
+# Archway
 
-A browser game for learning **high-level system design**. You wire an AWS-shaped path, serve live traffic, and watch the bill.
+**Defend the Origin.** A browser game for learning **high-level system design**. You wire an AWS-shaped path, serve live traffic, and watch the bill.
 
 Legitimate requests earn. Idle infrastructure burns. Attacks and DDoS that reach origin cost money. There is no backend.
 
@@ -62,7 +62,7 @@ Push to `main`. GitHub Actions builds and publishes Pages.
 
 1. Repo **Settings → Pages → Source**: GitHub Actions.
 2. Merge to `main` (or run the **Deploy GitHub Pages** workflow).
-3. Site URL: `https://akgarhwal.github.io/defend-the-origin/`
+3. Site URL: `https://akgarhwal.github.io/archway/`
 
 Local production build:
 
