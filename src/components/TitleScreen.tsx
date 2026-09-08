@@ -20,7 +20,7 @@ export function TitleScreen() {
         <h1>
           Defend the
           <br />
-          origin.
+          <span>origin.</span>
         </h1>
         <p className="lede">
           A frontend-only AWS-shaped tycoon for learning HLD. Legitimate requests are revenue.
