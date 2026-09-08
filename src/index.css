@@ -104,6 +104,14 @@ button { cursor: pointer; }
 .kpi { min-width: 120px; }
 .kpi b { display: block; font-family: var(--mono); font-size: 18px; color: var(--cyan); }
 .kpi span { color: var(--faint); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
+.visit-meta {
+  margin: 18px 0 0;
+  color: var(--faint);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
 
 .title-right {
   display: grid;

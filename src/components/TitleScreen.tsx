@@ -1,3 +1,5 @@
+import { useVisitCount } from '../hooks/useVisitCount';
+import { count } from '../lib/format';
 import { hasSave, useGame } from '../store/gameStore';
 
 export function TitleScreen() {
@@ -6,6 +8,7 @@ export function TitleScreen() {
   const startLive = useGame((s) => s.startLive);
   const continueSave = useGame((s) => s.continueSave);
   const saved = hasSave();
+  const visits = useVisitCount();
 
   return (
     <div className="title">
@@ -66,6 +69,11 @@ export function TitleScreen() {
             <span>Well-Architected pillars</span>
           </div>
         </div>
+        {visits != null && (
+          <p className="visit-meta">
+            {count(visits)} visit{visits === 1 ? '' : 's'}
+          </p>
+        )}
       </div>
       <div className="title-right">
         <div className="hero-card">
