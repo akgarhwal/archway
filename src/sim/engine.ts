@@ -754,7 +754,7 @@ function pickFromCompute(cands: PlacedNode[], kind: RequestKind): PlacedNode | u
   if (kind === 'static' || kind === 'upload') return of('s3');
   if (kind === 'read') return of('cache', 'dynamodb', 'rds');
   if (kind === 'write') return of('sqs', 'dynamodb', 'rds');
-  if (kind === 'search') return of('dynamodb', 'rds', 'cache');
+  if (kind === 'search') return of('cache', 'dynamodb', 'rds');
   return undefined;
 }
 

@@ -335,11 +335,10 @@ export const MISSIONS: Mission[] = [
     stakes: 'A typeahead that hits RDS is how the store takes itself down.',
     win: 'Search is its own path. The catalog cache is not optional once people start typing.',
     hint: 'ALB → EC2 → ElastiCache, with RDS only on a cache miss. Do not wire Internet → RDS.',
-    startRps: 20,
-    rpsGrowth: 0.08,
+    startRps: 16,
+    rpsGrowth: 0.05,
     mix: seeking,
-    events: true,
-    eventDelay: 16,
+    events: false,
     objectives: [
       { id: 'cache', type: 'place', service: 'cache', label: 'Place ElastiCache' },
       { id: 'rds', type: 'place', service: 'rds', label: 'Place RDS behind compute' },
@@ -347,7 +346,7 @@ export const MISSIONS: Mission[] = [
       { id: 'sla', type: 'sla', n: 90, label: 'Hold SLA ≥ 90% for 20s' },
     ],
     failSla: 35,
-    recommended: ['waf', 'alb', 'ec2', 'cache', 'rds'],
+    recommended: ['waf', 'alb', 'ec2', 'lambda', 'cache', 'rds'],
   },
   {
     id: 'shop-checkout',
