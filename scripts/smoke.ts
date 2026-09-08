@@ -1,5 +1,6 @@
 import { DEFAULT_MIX, LIVE_MIX, LIVE_START_RPS } from '../src/data/catalog';
 import { eventOrder, LIVE_FIRST_EVENT, makeEvent } from '../src/data/events';
+import { classifyEnd, quoteForEnd } from '../src/data/quotes';
 import { MISSIONS } from '../src/data/missions';
 import {
   connectNodes,
@@ -181,6 +182,19 @@ must(s.nodes.some((n) => n.service === 'internet'), 'cannot sell Users');
   must(mixFocus(currentMix(waved), 'ddos').includes('garbage'), 'ddos event copy');
   must(mixFocus(LIVE_MIX, 'stampede').includes('Hit ratio'), 'stampede copy even when mix is unchanged');
   console.log('mix bar', mixFocus(currentMix(live)), '| event', mixFocus(currentMix(waved), 'ddos'));
+}
+
+must(classifyEnd(true, null) === 'win', 'win class');
+must(classifyEnd(false, 'Bankrupt in production. The lull.') === 'bankrupt', 'bankrupt class');
+must(classifyEnd(false, 'SLA collapsed to 41%. Users left.') === 'sla', 'sla class');
+must(classifyEnd(false, 'Nothing useful was served. A path that does not exist is not an architecture.') === 'nopath', 'nopath class');
+{
+  const a = quoteForEnd(false, 'Bankrupt in production.', 3, 40);
+  const b = quoteForEnd(false, 'Bankrupt in production.', 3, 40);
+  const c = quoteForEnd(true, null, 3, 40);
+  must(a.kick === b.kick && a.quote.text === b.quote.text, 'end quote stable for a run');
+  must(a.kind === 'bankrupt' && a.kick.length > 8, 'bankrupt kick');
+  must(c.kind === 'win' && c.kick !== a.kick, 'win kick differs');
 }
 
 console.log('SMOKE OK');

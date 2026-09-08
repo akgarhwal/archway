@@ -841,6 +841,19 @@ button { cursor: pointer; }
   font-style: normal;
   color: var(--faint);
 }
+.end-quote {
+  margin: 18px 0 0;
+  padding: 14px 16px;
+}
+.end-quote.win { border-color: rgba(61, 214, 140, 0.35); }
+.end-quote.loss { border-color: rgba(255, 93, 122, 0.35); }
+.end-quote-kick {
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--cyan);
+}
+.end-quote.loss .end-quote-kick { color: var(--amber); }
 
 .how-stage {
   flex: 0 0 560px;
