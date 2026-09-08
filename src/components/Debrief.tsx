@@ -1,4 +1,4 @@
-import { MISSIONS } from '../data/missions';
+import { MISSIONS, nextMissionInTrack } from '../data/missions';
 import { clock, money, pct } from '../lib/format';
 import { sla, wellArchitected } from '../sim/score';
 import { persistGame, useGame } from '../store/gameStore';
@@ -9,8 +9,8 @@ export function Debrief() {
   const m = state.mode === 'mission' ? MISSIONS[state.missionIndex] : null;
   const s = sla(state);
   const wa = wellArchitected(state);
-  const next = state.missionIndex + 1;
-  const hasNext = state.mode === 'mission' && next < MISSIONS.length;
+  const next = state.mode === 'mission' ? nextMissionInTrack(state.missionIndex) : null;
+  const hasNext = next != null;
 
   const tips = debriefTips(state.won, state.loseReason, wa.total, s);
 
@@ -74,7 +74,9 @@ export function Debrief() {
               <button
                 type="button"
                 className="btn btn-primary"
-                onClick={() => state.startMission(next)}
+                onClick={() => {
+                  if (next != null) state.startMission(next);
+                }}
               >
                 Next mission
               </button>

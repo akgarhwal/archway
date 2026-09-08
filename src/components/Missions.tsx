@@ -1,11 +1,11 @@
-import { CORE_MISSION_COUNT, MISSIONS } from '../data/missions';
+import { CORE_MISSION_COUNT, isMissionLocked, MISSIONS } from '../data/missions';
 import { useGame } from '../store/gameStore';
 import type { Mission } from '../types';
 
 function MissionCard({ m, index }: { m: Mission; index: number }) {
   const completed = useGame((s) => s.completed);
   const startMission = useGame((s) => s.startMission);
-  const locked = index > 0 && !completed.includes(MISSIONS[index - 1].id);
+  const locked = isMissionLocked(index, completed);
   const done = completed.includes(m.id);
 
   return (
@@ -54,8 +54,8 @@ export function Missions() {
         <h2>Now design the shop.</h2>
         <p className="screen-narrow">
           E-commerce is the same primitives under a real product. One lesson each: catalog at the
-          edge, search off the SQL, checkout accepted not finished, then a flash sale. Unlocks
-          after Black Friday, then in order.
+          edge, search off the SQL, checkout accepted not finished, then a flash sale. This track
+          is separate from the eight — every shop mission is open.
         </p>
         <div className="shop-tease" aria-hidden="true">
           <div>

@@ -409,3 +409,25 @@ export const MISSIONS: Mission[] = [
 ];
 
 export const CORE_MISSION_COUNT = 8;
+
+export function trackStart(index: number): number {
+  return index < CORE_MISSION_COUNT ? 0 : CORE_MISSION_COUNT;
+}
+
+export function trackEnd(index: number): number {
+  return index < CORE_MISSION_COUNT ? CORE_MISSION_COUNT : MISSIONS.length;
+}
+
+/** Core curriculum unlocks in order. Storefront is a separate track — every shop mission is open. */
+export function isMissionLocked(index: number, completed: string[]): boolean {
+  if (index < 0 || index >= MISSIONS.length) return true;
+  if (index >= CORE_MISSION_COUNT) return false;
+  if (index === 0) return false;
+  return !completed.includes(MISSIONS[index - 1].id);
+}
+
+export function nextMissionInTrack(index: number): number | null {
+  const end = trackEnd(index);
+  const next = index + 1;
+  return next < end ? next : null;
+}
