@@ -268,6 +268,17 @@ export const KIND_META: Record<
   ddos: { label: 'DDOS', hint: 'Flood — absorb at Shield / CDN', earn: 0.04 },
 };
 
+/** Packet and mix-bar colors — keep these in lockstep with `.pkt-*` in CSS. */
+export const KIND_COLOR: Record<RequestKind, string> = {
+  static: '#7dd3fc',
+  read: '#86efac',
+  write: '#fbbf24',
+  upload: '#c4b5fd',
+  search: '#67e8f9',
+  malicious: '#fb7185',
+  ddos: '#f43f5e',
+};
+
 export const DEFAULT_MIX: Mix = {
   static: 0.38,
   read: 0.28,

@@ -1,12 +1,17 @@
+import { DEFAULT_MIX, LIVE_MIX } from '../src/data/catalog';
+import { makeEvent } from '../src/data/events';
+import { MISSIONS } from '../src/data/missions';
 import {
   connectNodes,
   createInitialState,
+  currentMix,
   deleteSelection,
   goLive,
   placeNode,
   simulate,
   upgradeNode,
 } from '../src/sim/engine';
+import { mixFocus } from '../src/sim/mixFocus';
 import { sla } from '../src/sim/score';
 
 function must(cond: boolean, msg: string) {
@@ -128,5 +133,50 @@ s = createInitialState('sandbox', 0, 1);
 s = { ...s, selectedId: 'n_internet' };
 s = deleteSelection(s);
 must(s.nodes.some((n) => n.service === 'internet'), 'cannot sell Users');
+
+{
+  const near = (a: number, b: number) => Math.abs(a - b) < 0.02;
+  const boot = createInitialState('mission', 0, 1);
+  must(near(currentMix(boot).read, MISSIONS[0].mix.read), 'mission 01 mix is quiet reads');
+  must(currentMix(boot).malicious === 0, 'mission 01 has no attacks');
+  must(mixFocus(currentMix(boot)).startsWith('Mixed product'), 'quiet mix is mixed, not cache-heavy');
+
+  const edge = createInitialState('mission', 4, 1);
+  must(currentMix(edge).static > 0.55, 'edge-first is static-heavy');
+  must(mixFocus(currentMix(edge)).includes('CDN'), 'static-heavy focus names CDN');
+
+  const cacheM = createInitialState('mission', 5, 1);
+  must(currentMix(cacheM).read > 0.5, 'cache mission is read-heavy');
+  must(mixFocus(currentMix(cacheM)).includes('Cache'), 'read-heavy focus names cache');
+
+  const writes = createInitialState('mission', 6, 1);
+  must(currentMix(writes).write > 0.4, 'async mission is write-heavy');
+  must(mixFocus(currentMix(writes)).includes('Queue'), 'write-heavy focus names the queue');
+
+  const seeking = createInitialState('mission', 9, 1);
+  must(currentMix(seeking).search >= 0.45, 'shop search is search-heavy');
+  must(mixFocus(currentMix(seeking)).includes('Search-heavy'), 'search mix names search');
+
+  const neighbors = createInitialState('mission', 2, 1);
+  must(mixFocus(currentMix(neighbors)).includes('Hostile'), 'bad-neighbors mix is hostile');
+
+  const flood = createInitialState('mission', 3, 1);
+  must(mixFocus(currentMix(flood)).includes('Flood'), 'the-flood mix names the flood');
+
+  const sandbox = createInitialState('sandbox', 0, 1);
+  must(near(currentMix(sandbox).static, DEFAULT_MIX.static), 'sandbox uses default mix');
+  must(mixFocus(currentMix(sandbox)).startsWith('Mixed product'), 'sandbox baseline is mixed');
+
+  const live = createInitialState('live', 0, 1);
+  must(!live.liveStarted, 'staging starts closed');
+  must(near(currentMix(live).malicious, LIVE_MIX.malicious), 'staging already uses live mix');
+  must(mixFocus(currentMix(live)).includes('Hostile'), 'production mix is hostile from staging');
+
+  const waved = { ...live, event: makeEvent('ddos', null) };
+  must(currentMix(waved).ddos > 0.5, 'ddos event replaces the mix');
+  must(mixFocus(currentMix(waved), 'ddos').includes('garbage'), 'ddos event copy');
+  must(mixFocus(LIVE_MIX, 'stampede').includes('Hit ratio'), 'stampede copy even when mix is unchanged');
+  console.log('mix bar', mixFocus(currentMix(live)), '| event', mixFocus(currentMix(waved), 'ddos'));
+}
 
 console.log('SMOKE OK');

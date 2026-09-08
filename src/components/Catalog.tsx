@@ -1,4 +1,4 @@
-import { CATALOG, CATEGORY_ORDER } from '../data/catalog';
+import { CATALOG, CATEGORY_ORDER, KIND_COLOR } from '../data/catalog';
 import { money } from '../lib/format';
 import { useGame } from '../store/gameStore';
 import type { ServiceId } from '../types';
@@ -13,11 +13,11 @@ export function Catalog() {
     <aside className="catalog">
       <div className="side-h">Service catalog</div>
       <div className="legend">
-        <span><i className="pkt-static" style={{ background: '#7dd3fc' }} /> Static</span>
-        <span><i style={{ background: '#86efac' }} /> Read</span>
-        <span><i style={{ background: '#fbbf24' }} /> Write</span>
-        <span><i style={{ background: '#fb7185' }} /> Attack</span>
-        <span><i style={{ background: '#f43f5e' }} /> DDoS</span>
+        <span><i style={{ background: KIND_COLOR.static }} /> Static</span>
+        <span><i style={{ background: KIND_COLOR.read }} /> Read</span>
+        <span><i style={{ background: KIND_COLOR.write }} /> Write</span>
+        <span><i style={{ background: KIND_COLOR.malicious }} /> Attack</span>
+        <span><i style={{ background: KIND_COLOR.ddos }} /> DDoS</span>
       </div>
       {CATEGORY_ORDER.map((g) => {
         const items = Object.values(CATALOG).filter((d) => d.placeable && d.category === g.id);
