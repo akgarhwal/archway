@@ -393,6 +393,86 @@ button { cursor: pointer; }
 }
 .stat.has-tip { cursor: help; }
 
+.mixbar {
+  flex: none;
+  position: relative;
+  z-index: 20;
+  border-bottom: 1px solid var(--line);
+  background: #0a1016;
+  padding: 6px 12px 7px;
+}
+.mixbar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.mixbar-row > .lbl {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+  flex: none;
+}
+.mixbar-track {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  height: 18px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #0e1620;
+  border: 1px solid var(--line);
+}
+.mixbar-track.event {
+  border-color: rgba(245, 165, 36, 0.45);
+}
+.mix-seg {
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+  overflow: hidden;
+  flex-shrink: 1;
+  transition: flex-grow 0.45s ease;
+  outline: none;
+}
+.mix-seg.silent {
+  pointer-events: none;
+  min-width: 0;
+}
+.mix-seg:focus-visible {
+  box-shadow: inset 0 0 0 1px #0b1118, inset 0 0 0 2px var(--amber);
+}
+.mix-seg span {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: #0b1118;
+  white-space: nowrap;
+  padding: 0 5px;
+  pointer-events: none;
+}
+.mixbar-flag {
+  flex: none;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+.mixbar-focus {
+  margin: 5px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
 .live-gate {
   position: absolute;
   left: 16px;

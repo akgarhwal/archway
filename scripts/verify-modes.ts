@@ -1,12 +1,15 @@
 import {
   connectNodes,
   createInitialState,
+  currentMix,
   evaluateObjectives,
   goLive,
   placeNode,
   simulate,
 } from '../src/sim/engine';
+import { mixFocus } from '../src/sim/mixFocus';
 import { sla, wellArchitected } from '../src/sim/score';
+import { LIVE_MIX } from '../src/data/catalog';
 import { MISSIONS } from '../src/data/missions';
 import type { GameState, ServiceId } from '../src/types';
 
@@ -228,6 +231,21 @@ console.log('--- production ---');
   console.log(
     `production ok t=${s.simTime.toFixed(0)} served=${s.metrics.servedTotal} money=${s.money.toFixed(0)} sla=${sla(s).toFixed(0)}`,
   );
+}
+
+console.log('--- mix ---');
+{
+  const staging = createInitialState('live', 0, 1);
+  assert(currentMix(staging).ddos === LIVE_MIX.ddos, 'staging mix is production mix');
+  assert(mixFocus(currentMix(staging)).includes('Hostile'), 'production focus is hostile');
+  for (let i = 0; i < MISSIONS.length; i++) {
+    const s = createInitialState('mission', i, 1);
+    const mix = currentMix(s);
+    const sum = Object.values(mix).reduce((a, b) => a + b, 0);
+    assert(Math.abs(sum - 1) < 1e-6, `mission ${i} mix must normalize`);
+    assert(mixFocus(mix).length > 8, `mission ${i} needs a focus line`);
+  }
+  console.log('mix ok', MISSIONS.length, 'missions');
 }
 
 console.log('VERIFY OK');

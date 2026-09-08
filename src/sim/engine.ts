@@ -905,7 +905,8 @@ function maybeCoach(state: GameState, id: string, msg: Omit<CoachMsg, 'id'>) {
   state.coach = { id, ...msg };
 }
 
-function currentMix(state: GameState): Mix {
+/** Mix the engine is spawning right now — mission/sandbox/live baseline, or the active event. */
+export function currentMix(state: Pick<GameState, 'mode' | 'missionIndex' | 'event'>): Mix {
   const mission = state.mode === 'mission' ? MISSIONS[state.missionIndex] : null;
   const base = mission?.mix ?? (state.mode === 'live' ? LIVE_MIX : DEFAULT_MIX);
   if (state.event?.mix) return normalize(state.event.mix);
