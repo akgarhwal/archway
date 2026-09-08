@@ -119,3 +119,78 @@ export function quoteForHour(now = Date.now()): Quote {
   const i = ((hour % QUOTES.length) + QUOTES.length) % QUOTES.length;
   return QUOTES[i];
 }
+
+export type EndKind = 'win' | 'bankrupt' | 'sla' | 'nopath' | 'loss';
+
+const WIN_KICKS = [
+  'That path held. The next one will not grade on a curve.',
+  'Cleared. Production is the same packets with worse manners.',
+  'You felt it. Run the next one before the feeling fades.',
+  'Good. Now do it when you cannot pause.',
+  'Architecture held. The catalog still has a trap with your name on it.',
+];
+
+const BANKRUPT_KICKS = [
+  'Ten EC2s is still the trap. Draw less. Survive more.',
+  'The fortress was pretty. The lull invoiced it anyway.',
+  'Idle boxes do not care that you meant to right-size later.',
+  'You bought the catalog. The bill bought you.',
+  'Bankrupt is just opex with better copy. Retry smaller.',
+];
+
+const SLA_KICKS = [
+  'Users left. They do not wait for the diagram to finish.',
+  'Refunds are not a growth strategy. Headroom is.',
+  'Past 80% utilization, latency is not linear. You found the cliff.',
+  'Failed customers are an invoice. Protect the happy path, then decorate.',
+  'The SLA did not collapse. You dropped it. Run it again with two targets.',
+];
+
+const NOPATH_KICKS = [
+  'A path that does not exist is not an architecture. Wire something.',
+  'Packets only travel edges you draw. Draw one.',
+  'The Internet node is not a product. Connect it to compute.',
+];
+
+const LOSS_KICKS = [
+  'The packets did not care about your feelings. Same grant. New diagram.',
+  'Incident review is free. The next run is the apology.',
+  'Hope is not a strategy. Retry is.',
+];
+
+export function classifyEnd(won: boolean, loseReason: string | null): EndKind {
+  if (won) return 'win';
+  const r = loseReason ?? '';
+  if (r.includes('Bankrupt')) return 'bankrupt';
+  if (r.includes('SLA')) return 'sla';
+  if (r.includes('path that does not exist') || r.includes('Nothing useful')) return 'nopath';
+  return 'loss';
+}
+
+function mixIndex(seed: number, simTime: number, salt: number, n: number): number {
+  const x = Math.abs(Math.floor(seed + simTime * 13 + salt * 997));
+  return n ? x % n : 0;
+}
+
+/** Stable for a run (seed + sim time). Random across runs. */
+export function quoteForEnd(
+  won: boolean,
+  loseReason: string | null,
+  seed: number,
+  simTime: number,
+): { quote: Quote; kick: string; kind: EndKind } {
+  const kind = classifyEnd(won, loseReason);
+  const kicks =
+    kind === 'win'
+      ? WIN_KICKS
+      : kind === 'bankrupt'
+        ? BANKRUPT_KICKS
+        : kind === 'sla'
+          ? SLA_KICKS
+          : kind === 'nopath'
+            ? NOPATH_KICKS
+            : LOSS_KICKS;
+  const quote = QUOTES[mixIndex(seed, simTime, 1, QUOTES.length)];
+  const kick = kicks[mixIndex(seed, simTime, 7, kicks.length)];
+  return { quote, kick, kind };
+}

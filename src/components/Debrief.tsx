@@ -1,4 +1,5 @@
 import { MISSIONS, nextMissionInTrack } from '../data/missions';
+import { quoteForEnd } from '../data/quotes';
 import { clock, money, pct } from '../lib/format';
 import { sla, wellArchitected } from '../sim/score';
 import { persistGame, useGame } from '../store/gameStore';
@@ -13,6 +14,7 @@ export function Debrief() {
   const hasNext = next != null;
 
   const tips = debriefTips(state.won, state.loseReason, wa.total, s);
+  const end = quoteForEnd(state.won, state.loseReason, state.seed, state.simTime);
 
   return (
     <div className="screen">
@@ -114,6 +116,15 @@ export function Debrief() {
               <li key={t}>{t}</li>
             ))}
           </ul>
+          <figure className={`hourly-quote end-quote ${state.won ? 'win' : 'loss'}`}>
+            <span className="kicker">{state.won ? 'Takeaway' : 'Postmortem'}</span>
+            <blockquote>“{end.quote.text}”</blockquote>
+            <figcaption>
+              — {end.quote.author}
+              {end.quote.note ? <em> · {end.quote.note}</em> : null}
+            </figcaption>
+            <p className="end-quote-kick">{end.kick}</p>
+          </figure>
         </div>
       </div>
     </div>
