@@ -19,3 +19,4 @@ jobs:
       - run: npx tsx scripts/verify-hops.ts
       - run: npx tsx scripts/smoke.ts
       - run: npx tsx scripts/verify-modes.ts
+      - run: npx tsx scripts/play-production.ts

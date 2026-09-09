@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "test": "npx tsx scripts/verify-hops.ts && npx tsx scripts/smoke.ts && npx tsx scripts/verify-modes.ts"
+    "test": "npx tsx scripts/verify-hops.ts && npx tsx scripts/smoke.ts && npx tsx scripts/verify-modes.ts && npx tsx scripts/play-production.ts"
   },
   "dependencies": {
     "@xyflow/react": "^12.8.2",
