@@ -753,7 +753,13 @@ function serveLocal(
 }
 
 function pickFromCompute(cands: PlacedNode[], kind: RequestKind): PlacedNode | undefined {
-  const of = (...ids: ServiceId[]) => cands.find((n) => ids.includes(n.service));
+  const of = (...ids: ServiceId[]) => {
+    for (const id of ids) {
+      const n = cands.find((c) => c.service === id);
+      if (n) return n;
+    }
+    return undefined;
+  };
   if (kind === 'static' || kind === 'upload') return of('s3');
   if (kind === 'read') return of('cache', 'dynamodb', 'rds');
   if (kind === 'write') return of('sqs', 'dynamodb', 'rds');

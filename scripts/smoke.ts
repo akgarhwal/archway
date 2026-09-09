@@ -85,6 +85,39 @@ cur.screen = 'play';
 for (let i = 0; i < 120; i++) cur = simulate(cur, 0.1);
 console.log('waf served', cur.metrics.servedTotal, 'blocked', cur.metrics.blocked, 'breaches', cur.metrics.breaches);
 must(cur.metrics.blocked > 0, 'WAF should block some attacks');
+
+{
+  // Reads must prefer ElastiCache even if RDS/DDB were wired first.
+  let s = createInitialState('mission', 5, 11);
+  for (const svc of ['ec2', 'rds', 'dynamodb', 'cache'] as const) {
+    const r = placeNode(s, svc, 200, 180);
+    if ('error' in r) throw new Error(r.error);
+    s = r;
+  }
+  const id = (svc: (typeof s.nodes)[number]['service']) => s.nodes.find((n) => n.service === svc)!.id;
+  for (const [a, b] of [
+    ['n_internet', id('ec2')],
+    [id('ec2'), id('rds')],
+    [id('ec2'), id('dynamodb')],
+    [id('ec2'), id('cache')],
+    [id('cache'), id('rds')],
+  ] as const) {
+    const w = connectNodes(s, a, b);
+    if ('error' in w) throw new Error(w.error);
+    s = w;
+  }
+  s.speed = 1;
+  s.screen = 'play';
+  for (let i = 0; i < 80; i++) s = simulate(s, 0.1);
+  must(s.metrics.cacheHits > 4, 'reads prefer cache over DB wired first, hits=' + s.metrics.cacheHits);
+  const cacheRt = s.runtime[id('cache')];
+  const ddbRt = s.runtime[id('dynamodb')];
+  must(
+    (cacheRt?.processed ?? 0) > (ddbRt?.processed ?? 0),
+    'cache should take the read path, cache=' + cacheRt?.processed + ' ddb=' + ddbRt?.processed,
+  );
+  console.log('cache prefer', 'hits', s.metrics.cacheHits, 'cache', cacheRt?.processed, 'ddb', ddbRt?.processed);
+}
 must(
   cur.metrics.breaches * 8 < cur.metrics.blocked,
   'healthy WAF should leak far less than it blocks, blocked=' +
