@@ -1,0 +1,21 @@
+name: Test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsc -b
+      - run: npx tsx scripts/verify-hops.ts
+      - run: npx tsx scripts/smoke.ts
+      - run: npx tsx scripts/verify-modes.ts
