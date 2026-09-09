@@ -85,6 +85,13 @@ cur.screen = 'play';
 for (let i = 0; i < 120; i++) cur = simulate(cur, 0.1);
 console.log('waf served', cur.metrics.servedTotal, 'blocked', cur.metrics.blocked, 'breaches', cur.metrics.breaches);
 must(cur.metrics.blocked > 0, 'WAF should block some attacks');
+must(
+  cur.metrics.breaches * 8 < cur.metrics.blocked,
+  'healthy WAF should leak far less than it blocks, blocked=' +
+    cur.metrics.blocked +
+    ' breaches=' +
+    cur.metrics.breaches,
+);
 
 s = createInitialState('live', 0, 3);
 must(s.money === 7200, 'live grant');

@@ -12,7 +12,7 @@ export function mixFocus(mix: Mix, event?: EventType | null): string {
     case 'spike':
       return 'Legitimate surge. Headroom and two targets, or latency cliffs.';
     case 'poison':
-      return 'Crafted attacks. A saturated WAF will start failing open.';
+      return 'Crafted attacks. ~10% sneak a healthy WAF — CloudFront is the second control.';
     case 'neighbor':
       return 'One instance just lost capacity. Never run a single EC2.';
     case 'lull':

@@ -59,7 +59,7 @@ export const EVENT_COPY: Record<
   },
   poison: {
     title: 'Poison packets',
-    detail: 'A burst of crafted malicious requests. A saturated WAF will start failing open.',
+    detail: 'A burst of crafted malicious requests. About 1 in 10 sneak a healthy WAF. CloudFront catches a slice of those; a saturated WAF fails open entirely.',
     duration: 11,
     rpsMul: 1.6,
     cacheMul: 1,

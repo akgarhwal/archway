@@ -6,7 +6,6 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
-  useViewport,
   type Connection,
   type Edge,
   type Node,
@@ -16,46 +15,13 @@ import {
 import { useCallback, useMemo } from 'react';
 import { CATALOG } from '../data/catalog';
 import { useGame } from '../store/gameStore';
-import type { RequestKind, ServiceId } from '../types';
+import type { ServiceId } from '../types';
 import { ServiceNode, type SvcNode } from './ServiceNode';
 import { WireEdge } from './WireEdge';
 import '@xyflow/react/dist/style.css';
 
 const nodeTypes = { service: ServiceNode };
 const edgeTypes = { wire: WireEdge };
-
-function bezier(a: { x: number; y: number }, b: { x: number; y: number }, t: number) {
-  const mx = (a.x + b.x) / 2;
-  const my = (a.y + b.y) / 2 - 28;
-  const u = 1 - t;
-  return {
-    x: u * u * a.x + 2 * u * t * mx + t * t * b.x,
-    y: u * u * a.y + 2 * u * t * my + t * t * b.y,
-  };
-}
-
-function PacketLayer() {
-  const packets = useGame((s) => s.packets);
-  const nodes = useGame((s) => s.nodes);
-  const { x, y, zoom } = useViewport();
-  const pos: Record<string, { x: number; y: number }> = {};
-  for (const n of nodes) pos[n.id] = { x: n.x + 84, y: n.y + 36 };
-
-  return (
-    <div
-      className="packets"
-      style={{ transform: `translate(${x}px, ${y}px) scale(${zoom})`, transformOrigin: '0 0' }}
-    >
-      {packets.map((p) => {
-        const a = pos[p.path[p.hop]];
-        const b = pos[p.path[p.hop + 1]] ?? a;
-        if (!a) return null;
-        const pt = bezier(a, b, Math.min(1, p.t));
-        return <i key={p.id} className={`pkt pkt-${p.kind as RequestKind}`} style={{ left: pt.x, top: pt.y }} />;
-      })}
-    </div>
-  );
-}
 
 export function LiveGate() {
   const mode = useGame((s) => s.mode);
@@ -285,7 +251,6 @@ function FlowInner() {
           maskColor="rgba(7,11,16,0.7)"
         />
       </ReactFlow>
-      <PacketLayer />
       <EventBanner />
     </div>
   );

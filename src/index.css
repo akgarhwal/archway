@@ -626,12 +626,16 @@ button { cursor: pointer; }
   margin: 6px 0 0 6px; font-family: var(--mono); font-size: 10px; color: var(--muted);
 }
 
-.packets { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .pkt {
   position: absolute; width: 9px; height: 9px; border-radius: 99px;
   margin: -4px 0 0 -4px;
   box-shadow: 0 0 10px currentColor;
   z-index: 4;
+}
+.pkt-on-wire {
+  margin: 0;
+  pointer-events: none;
+  z-index: 9;
 }
 .pkt-static { background: #7dd3fc; color: #7dd3fc; }
 .pkt-read { background: #86efac; color: #86efac; }
