@@ -322,17 +322,28 @@ function prefer(
   return ranked;
 }
 
+/** First connected hop in `ids` order. Two of the same service: the one wired first. */
+function firstOf(cands: PlacedNode[], ids: readonly ServiceId[]): PlacedNode | undefined {
+  for (const id of ids) {
+    const n = cands.find((c) => c.service === id);
+    if (n) return n;
+  }
+  return undefined;
+}
+
+/**
+ * Pick a next hop. Always honor `order` (Route 53 before origin, cache before DB).
+ * Equal-split only among hops that share the best rank — two ALBs, not WAF vs Lambda.
+ */
 function splitOrPrefer(
   state: GameState,
   cands: PlacedNode[],
   order: ServiceId[],
-  equalSplit: boolean,
 ): PlacedNode | undefined {
   if (!cands.length) return undefined;
-  if (equalSplit) return takePick(state, cands);
   const ranked = prefer(cands, order);
   const bestRank = order.indexOf(ranked[0].service);
-  const top = ranked.filter((n) => order.indexOf(n.service) === bestRank || (bestRank === -1 && true));
+  const top = bestRank === -1 ? ranked : ranked.filter((n) => order.indexOf(n.service) === bestRank);
   return takePick(state, top.length ? top : ranked);
 }
 
@@ -382,12 +393,21 @@ function processNode(
   }
 
   if (svc === 'internet') {
-    const next = splitOrPrefer(
-      state,
-      cands,
-      ['route53', 'shield', 'waf', 'cloudfront', 'apigateway', 'alb', 'ec2', 'lambda', 's3', 'sqs', 'cache', 'rds', 'dynamodb'],
-      true,
-    );
+    const next = splitOrPrefer(state, cands, [
+      'route53',
+      'shield',
+      'waf',
+      'cloudfront',
+      'apigateway',
+      'alb',
+      'ec2',
+      'lambda',
+      's3',
+      'sqs',
+      'cache',
+      'rds',
+      'dynamodb',
+    ]);
     if (!next) {
       return {
         status: 'dropped',
@@ -403,12 +423,15 @@ function processNode(
   if (svc === 'route53') {
     const live = cands.filter((n) => (state.runtime[n.id]?.utilization ?? 0) < 1.15);
     const pool = live.length ? live : cands;
-    const next = splitOrPrefer(
-      state,
-      pool,
-      ['shield', 'waf', 'cloudfront', 'apigateway', 'alb', 'ec2', 'lambda'],
-      true,
-    );
+    const next = splitOrPrefer(state, pool, [
+      'shield',
+      'waf',
+      'cloudfront',
+      'apigateway',
+      'alb',
+      'ec2',
+      'lambda',
+    ]);
     if (!next) return fail(kind, lat, 'DNS has no target');
     return fwd(next.id, 'RESOLVE', lat);
   }
@@ -424,7 +447,7 @@ function processNode(
         reason: 'Shield absorbed volumetric flood',
       };
     }
-    const next = splitOrPrefer(state, cands, ['waf', 'cloudfront', 'apigateway', 'alb', 'ec2'], true);
+    const next = splitOrPrefer(state, cands, ['waf', 'cloudfront', 'apigateway', 'alb', 'ec2']);
     if (!next) return terminateAtEdge(state, node, kind, lat);
     return fwd(next.id, kind === 'ddos' ? 'LEAK' : 'PASS', lat);
   }
@@ -462,12 +485,14 @@ function processNode(
         reason: 'WAF rate-limited the flood',
       };
     }
-    const next = splitOrPrefer(
-      state,
-      cands,
-      ['cloudfront', 'apigateway', 'alb', 'ec2', 'lambda', 's3'],
-      true,
-    );
+    const next = splitOrPrefer(state, cands, [
+      'cloudfront',
+      'apigateway',
+      'alb',
+      'ec2',
+      'lambda',
+      's3',
+    ]);
     if (!next) return terminateAtEdge(state, node, kind, lat);
     return fwd(next.id, 'ALLOW', lat);
   }
@@ -504,7 +529,7 @@ function processNode(
       kind === 'static' || kind === 'upload'
         ? ['s3', 'alb', 'apigateway', 'ec2', 'lambda']
         : ['apigateway', 'alb', 'ec2', 'lambda', 's3'];
-    const next = splitOrPrefer(state, cands, order, false);
+    const next = splitOrPrefer(state, cands, order);
     if (!next) {
       if (kind === 'static') return success(kind, lat, 'EDGE ORIGIN');
       return fail(kind, lat, 'CDN has no origin');
@@ -523,7 +548,7 @@ function processNode(
         reason: 'API Gateway throttled — still an origin-adjacent hop',
       };
     }
-    const next = splitOrPrefer(state, cands, ['alb', 'lambda', 'ec2', 'sqs'], true);
+    const next = splitOrPrefer(state, cands, ['alb', 'lambda', 'ec2', 'sqs']);
     if (!next) return serveLocal(state, node, kind, lat);
     return fwd(next.id, 'ROUTE', lat);
   }
@@ -603,12 +628,12 @@ function processNode(
       }
       r.misses += 1;
       state.metrics.cacheMisses += 1;
-      const db = cands.find((n) => DATA.includes(n.service));
+      const db = firstOf(cands, ['dynamodb', 'rds']);
       if (db) return fwd(db.id, 'MISS', lat);
       return fail(kind, lat, 'Cache miss with no database');
     }
     if (kind === 'write') {
-      const db = cands.find((n) => DATA.includes(n.service));
+      const db = firstOf(cands, ['dynamodb', 'rds']);
       if (db) return fwd(db.id, 'INVALIDATE', lat);
       return fail(kind, lat, 'Write missed the database');
     }
@@ -753,17 +778,10 @@ function serveLocal(
 }
 
 function pickFromCompute(cands: PlacedNode[], kind: RequestKind): PlacedNode | undefined {
-  const of = (...ids: ServiceId[]) => {
-    for (const id of ids) {
-      const n = cands.find((c) => c.service === id);
-      if (n) return n;
-    }
-    return undefined;
-  };
-  if (kind === 'static' || kind === 'upload') return of('s3');
-  if (kind === 'read') return of('cache', 'dynamodb', 'rds');
-  if (kind === 'write') return of('sqs', 'dynamodb', 'rds');
-  if (kind === 'search') return of('cache', 'dynamodb', 'rds');
+  if (kind === 'static' || kind === 'upload') return firstOf(cands, ['s3']);
+  if (kind === 'read') return firstOf(cands, ['cache', 'dynamodb', 'rds']);
+  if (kind === 'write') return firstOf(cands, ['sqs', 'dynamodb', 'rds']);
+  if (kind === 'search') return firstOf(cands, ['cache', 'dynamodb', 'rds']);
   return undefined;
 }
 
