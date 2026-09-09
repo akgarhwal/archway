@@ -15,9 +15,44 @@ import {
 } from '../src/sim/engine';
 import { mixFocus } from '../src/sim/mixFocus';
 import { sla } from '../src/sim/score';
+import type { GameState, ServiceId } from '../src/types';
 
 function must(cond: boolean, msg: string) {
   if (!cond) throw new Error(msg);
+}
+
+function sid(s: GameState, svc: ServiceId) {
+  const n = s.nodes.find((x) => x.service === svc);
+  if (!n) throw new Error('missing ' + svc);
+  return n.id;
+}
+
+function processed(s: GameState, svc: ServiceId) {
+  return s.runtime[sid(s, svc)]?.processed ?? 0;
+}
+
+function playGraph(
+  missionIndex: number,
+  seed: number,
+  services: ServiceId[],
+  wires: Array<[ServiceId | 'internet', ServiceId]>,
+) {
+  let s = createInitialState('mission', missionIndex, seed);
+  for (const svc of services) {
+    const r = placeNode(s, svc, 200, 180);
+    if ('error' in r) throw new Error(r.error);
+    s = r;
+  }
+  for (const [a, b] of wires) {
+    const from = a === 'internet' ? 'n_internet' : sid(s, a);
+    const w = connectNodes(s, from, sid(s, b));
+    if ('error' in w) throw new Error(w.error);
+    s = w;
+  }
+  s.speed = 1;
+  s.screen = 'play';
+  for (let i = 0; i < 80; i++) s = simulate(s, 0.1);
+  return s;
 }
 
 let s = createInitialState('mission', 0, 42);
@@ -85,6 +120,110 @@ cur.screen = 'play';
 for (let i = 0; i < 120; i++) cur = simulate(cur, 0.1);
 console.log('waf served', cur.metrics.servedTotal, 'blocked', cur.metrics.blocked, 'breaches', cur.metrics.breaches);
 must(cur.metrics.blocked > 0, 'WAF should block some attacks');
+
+{
+  // Lower-ranked hops are wired FIRST so a random/first-neighbor picker would pick them.
+
+  const dns = playGraph(0, 11, ['route53', 'ec2'], [
+    ['internet', 'ec2'],
+    ['internet', 'route53'],
+    ['route53', 'ec2'],
+  ]);
+  must(
+    processed(dns, 'route53') > processed(dns, 'ec2') * 0.85,
+    'Internet prefers Route 53 over a direct EC2 wire, r53=' +
+      processed(dns, 'route53') +
+      ' ec2=' +
+      processed(dns, 'ec2'),
+  );
+
+  const edge = playGraph(0, 12, ['shield', 'waf', 'ec2'], [
+    ['internet', 'shield'],
+    ['shield', 'ec2'],
+    ['shield', 'waf'],
+    ['waf', 'ec2'],
+  ]);
+  must(
+    processed(edge, 'waf') > processed(edge, 'shield') * 0.85,
+    'Shield prefers WAF over a parallel EC2 wire, waf=' +
+      processed(edge, 'waf') +
+      ' shield=' +
+      processed(edge, 'shield'),
+  );
+
+  const cdn = playGraph(0, 13, ['waf', 'cloudfront', 'lambda'], [
+    ['internet', 'waf'],
+    ['waf', 'lambda'],
+    ['waf', 'cloudfront'],
+    ['cloudfront', 'lambda'],
+  ]);
+  must(
+    processed(cdn, 'cloudfront') > processed(cdn, 'waf') * 0.85,
+    'WAF prefers CloudFront over a parallel Lambda wire, cf=' +
+      processed(cdn, 'cloudfront') +
+      ' waf=' +
+      processed(cdn, 'waf'),
+  );
+
+  const api = playGraph(0, 14, ['apigateway', 'alb', 'lambda'], [
+    ['internet', 'apigateway'],
+    ['apigateway', 'lambda'],
+    ['apigateway', 'alb'],
+    ['alb', 'lambda'],
+  ]);
+  must(
+    processed(api, 'alb') > processed(api, 'apigateway') * 0.85,
+    'API Gateway prefers ALB over a parallel Lambda wire, alb=' +
+      processed(api, 'alb') +
+      ' gw=' +
+      processed(api, 'apigateway'),
+  );
+
+  const cache = playGraph(5, 11, ['ec2', 'rds', 'dynamodb', 'cache'], [
+    ['internet', 'ec2'],
+    ['ec2', 'rds'],
+    ['ec2', 'dynamodb'],
+    ['ec2', 'cache'],
+    ['cache', 'rds'],
+  ]);
+  must(cache.metrics.cacheHits > 4, 'reads prefer cache over DB wired first, hits=' + cache.metrics.cacheHits);
+  must(
+    processed(cache, 'cache') > processed(cache, 'dynamodb'),
+    'cache should take the read path, cache=' +
+      processed(cache, 'cache') +
+      ' ddb=' +
+      processed(cache, 'dynamodb'),
+  );
+
+  const writes = playGraph(6, 15, ['ec2', 'dynamodb', 'sqs'], [
+    ['internet', 'ec2'],
+    ['ec2', 'dynamodb'],
+    ['ec2', 'sqs'],
+  ]);
+  must(
+    processed(writes, 'sqs') > processed(writes, 'dynamodb'),
+    'writes prefer SQS over DDB wired first, sqs=' +
+      processed(writes, 'sqs') +
+      ' ddb=' +
+      processed(writes, 'dynamodb'),
+  );
+
+  console.log(
+    'prefer',
+    'r53',
+    processed(dns, 'route53'),
+    'waf',
+    processed(edge, 'waf'),
+    'cf',
+    processed(cdn, 'cloudfront'),
+    'alb',
+    processed(api, 'alb'),
+    'cache hits',
+    cache.metrics.cacheHits,
+    'sqs',
+    processed(writes, 'sqs'),
+  );
+}
 must(
   cur.metrics.breaches * 8 < cur.metrics.blocked,
   'healthy WAF should leak far less than it blocks, blocked=' +

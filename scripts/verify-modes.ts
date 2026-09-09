@@ -138,19 +138,25 @@ function buildMission(index: number): GameState {
       s = wire(s, 'alb', 'ec2', 0, 1);
       break;
     case 11:
+      // One database (DDB), two ALB targets. Dual RDS+DDB plus a Lambda that was
+      // both origin and SQS worker went bankrupt once writes correctly preferred the queue.
       s = backbone(s, [
         'cloudfront',
         'waf',
         'alb',
         'ec2',
-        'lambda',
         'cache',
         's3',
         'sqs',
         'dynamodb',
-        'rds',
         'cloudwatch',
       ]);
+      s = place(s, 'ec2', 480, 280);
+      s = wire(s, 'alb', 'ec2', 0, 1);
+      s = wire(s, 'cache', 'dynamodb');
+      s = wire(s, 'ec2', 'cache', 1, 0);
+      s = wire(s, 'ec2', 'sqs', 1, 0);
+      s = wire(s, 'ec2', 'dynamodb', 1, 0);
       break;
     default:
       fail(`no build for mission ${index}`);
