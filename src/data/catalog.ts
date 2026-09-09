@@ -56,7 +56,7 @@ export const CATALOG: Record<ServiceId, ServiceDef> = {
     aws: 'AWS WAF',
     category: 'security',
     blurb: 'Layer-7 firewall. Inspects HTTP for SQLi, XSS, bots, and rate abuse.',
-    when: 'Always in front of any origin that parses input. Undersized WAFs start letting attackers through.',
+    when: 'Always in front of any origin that parses input. Undersized WAFs fail open. Poison packets still sneak — CloudFront bot score is the second control.',
     capex: 640,
     opexPerMin: 5.2,
     rps: 110,

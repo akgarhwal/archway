@@ -25,14 +25,14 @@ const STEPS: { id: DemoHopId | 'cloudwatch'; title: string; body: string; why: s
   {
     id: 'waf',
     title: 'WAF',
-    body: 'L7 inspect. Blocks SQLi, XSS, bots. Undersized WAFs fail open.',
-    why: 'This is the hop that turns a breach into a 403. Put it in front of origin. A parallel wire around it is a bypass.',
+    body: 'L7 inspect. Blocks SQLi, XSS, bots. Undersized WAFs fail open. Poison packets still sneak.',
+    why: 'This is the hop that turns a breach into a 403. Put it in front of origin. A parallel wire around it is a bypass. CloudFront is the second control for packets the WAF misses.',
   },
   {
     id: 'cloudfront',
     title: 'CloudFront',
-    body: 'CDN. Hits never touch EC2 or RDS. Also soaks a slice of floods.',
-    why: 'Most of the internet is files, not SQL. A cache hit at the edge is the cheapest 200 you will ever serve.',
+    body: 'CDN. Hits never touch EC2 or RDS. Soaks floods and drops a slice of crafted attacks.',
+    why: 'Most of the internet is files, not SQL. A cache hit at the edge is the cheapest 200 you will ever serve. Bot score is why a WAF sneak is not automatically a breach.',
   },
   {
     id: 'alb',

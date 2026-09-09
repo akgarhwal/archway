@@ -431,8 +431,10 @@ function processNode(
 
   if (svc === 'waf') {
     if (kind === 'malicious') {
-      const bypass = !ok || take(state) > 0.92;
-      if (!bypass) {
+      // Healthy WAF blocks what it inspects. Poison packets sneak ~10% (defense in depth).
+      // Saturated WAF fails open — add another WAF, don't buy more EC2.
+      const sneak = !ok ? 1 : state.event?.type === 'poison' ? 0.1 : 0;
+      if (take(state) >= sneak) {
         r.blocked += 1;
         return {
           status: 'blocked',
@@ -444,8 +446,10 @@ function processNode(
       }
       maybeCoach(state, 'waf-bypass', {
         title: 'WAF failed open',
-        body: 'A saturated or unlucky WAF let a malicious request through. Size the WAF for peak, and never leave a parallel path around it.',
-        lesson: 'Inspection has a capacity. Undersized WAFs become expensive routers.',
+        body: !ok
+          ? 'This WAF ran out of inspect capacity, so it became a router. Wire a second WAF in parallel, or put CloudFront/Shield in front so the flood never arrives here.'
+          : 'A crafted packet slipped the rules. That is what CloudFront bot score is for — a second control on the path, not more origin.',
+        lesson: 'Inspection has a capacity. Residual sneaks need a second hop, not more EC2.',
       });
     }
     if (kind === 'ddos' && take(state) < 0.42) {
@@ -479,7 +483,7 @@ function processNode(
         reason: 'CloudFront soaked flood at PoP',
       };
     }
-    if (kind === 'malicious' && take(state) < 0.12) {
+    if (kind === 'malicious' && take(state) < 0.4) {
       r.blocked += 1;
       return {
         status: 'blocked',
