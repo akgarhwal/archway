@@ -8,7 +8,7 @@ export const EVENT_COPY: Record<
     title: 'DDoS wave',
     detail: 'Volumetric + L7 flood. Absorb at Shield / CloudFront / WAF — do not scale origin to eat it.',
     duration: 16,
-    rpsMul: 3.2,
+    rpsMul: 2.4,
     cacheMul: 1,
     mix: {
       static: 0.08,
@@ -41,7 +41,7 @@ export const EVENT_COPY: Record<
     detail: 'Hit ratio collapsed. Every read is now a database read. This is why TTLs and coalescing exist.',
     duration: 10,
     rpsMul: 1.35,
-    cacheMul: 0.08,
+    cacheMul: 0.22,
   },
   spike: {
     title: 'Traffic spike',

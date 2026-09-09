@@ -41,6 +41,7 @@ export function loadSave(): GameState | null {
     s.placing = null;
     s.liveStarted = s.liveStarted ?? s.mode !== 'live';
     s.peakMoney = s.peakMoney ?? s.money;
+    s.slaFailFor = s.slaFailFor ?? 0;
     if (s.metrics) {
       if (typeof s.metrics.seenTotal !== 'number') {
         s.metrics.seenTotal = (s.metrics.servedTotal ?? 0) + (s.metrics.blocked ?? 0) + (s.metrics.failed ?? 0);

@@ -53,7 +53,7 @@ import {
 const SAVE_SERIES = 48;
 const MAX_PACKETS = 90;
 const MAX_LOG = 42;
-const MAX_QUEUE = 80;
+const MAX_QUEUE = 900;
 const TRAVERSE = 0.38;
 
 const ORIGIN: ServiceId[] = [
@@ -210,6 +210,7 @@ export function createInitialState(mode: ModeLike, missionIndex: number, seed?: 
     edgeSeq: 1,
     pktSeq: 1,
     bankruptFor: 0,
+    slaFailFor: 0,
     toasts: [],
     moneySeries: [grant],
     slaSeries: [100],
@@ -372,6 +373,10 @@ function processNode(
   }
 
   const ok = tryUse(state, node, dt, kind === 'search' ? 2 : 1);
+  if (!ok && COMPUTE.includes(svc) && (kind === 'write' || kind === 'upload')) {
+    const q = firstOf(cands, ['sqs']);
+    if (q) return fwd(q.id, 'SHED', lat);
+  }
   if (!ok && svc !== 'internet' && svc !== 'sqs') {
     r.dropped += 1;
     if (LEGIT.includes(kind)) {
@@ -417,7 +422,7 @@ function processNode(
   }
 
   if (svc === 'shield') {
-    if (kind === 'ddos' && take(state) < 0.88) {
+    if (kind === 'ddos' && take(state) < 0.93) {
       r.blocked += 1;
       return {
         status: 'blocked',
@@ -540,7 +545,7 @@ function processNode(
         next: next.id,
         decision: 'SPREAD',
         latency: lat,
-        money: kind === 'ddos' ? -1.6 : 0,
+        money: kind === 'ddos' ? -0.45 : 0,
         reason: '',
       };
     }
@@ -907,7 +912,7 @@ export function liveIngress(t: number): number {
   const trend = LIVE_START_RPS + t * 0.105;
   const day = 1 + 0.3 * Math.sin((t / 70) * Math.PI * 2);
   const breath = 1 + 0.1 * Math.sin((t / 22) * Math.PI * 2);
-  return Math.min(130, Math.max(4, trend * day * breath));
+  return Math.min(75, Math.max(4, trend * day * breath));
 }
 
 export function currentRps(state: GameState): number {
@@ -920,6 +925,10 @@ export function currentRps(state: GameState): number {
         : (mission?.startRps ?? 8) + state.simTime * (mission?.rpsGrowth ?? 0);
   rps = Math.min(state.mode === 'sandbox' ? 220 : 140, rps);
   if (state.event) rps *= state.event.rpsMul;
+  // Production events change the mix and sting origin. They must not 3× a
+  // 75 RPS baseline into a 300 RPS one-shot that a correct two-target edge
+  // cannot survive — that's when the ledger can never recross the grant.
+  if (state.mode === 'live') rps = Math.min(96, Math.max(4, rps));
   return rps;
 }
 
@@ -987,7 +996,7 @@ function tickEvents(state: GameState, dt: number) {
     if (type === 'ddos') {
       maybeCoach(state, 'ddos-event', {
         title: 'DDoS wave inbound',
-        body: 'RPS just tripled and most of it is garbage. If origin utilization spikes, your edge is missing or bypassed.',
+        body: 'RPS jumped and most of it is garbage. If origin utilization spikes, your edge is missing or bypassed.',
         lesson: 'The cheapest DDoS packet is the one Shield drops.',
       });
     }
@@ -1088,7 +1097,14 @@ function tickWinLose(state: GameState) {
       state.won = false;
       return;
     }
-    if (state.simTime > 22 && state.metrics.legitTotWindow > 40 && s < 42) {
+    // A 16s DDoS can dip the 160-sample SLA instantly. Require a sustained
+    // collapse so a correct edge (Shield/WAF/CDN) can ride one flood out.
+    if (state.simTime > 22 && state.metrics.legitTotWindow > 40 && s < 40) {
+      state.slaFailFor += 0.1;
+    } else {
+      state.slaFailFor = 0;
+    }
+    if (state.slaFailFor > 18) {
       state.loseReason = `SLA collapsed to ${s.toFixed(0)}%. Users left. Failed requests are refunds you cannot pause away.`;
       state.speed = 0;
       state.screen = 'debrief';

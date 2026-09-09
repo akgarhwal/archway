@@ -263,6 +263,8 @@ export interface GameState {
   edgeSeq: number;
   pktSeq: number;
   bankruptFor: number;
+  /** Production only: seconds legitimate SLA has been below the collapse line. */
+  slaFailFor: number;
   toasts: Toast[];
   moneySeries: number[];
   slaSeries: number[];
